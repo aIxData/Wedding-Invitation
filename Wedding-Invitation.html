@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Wedding Invitation</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&family=Great+Vibes&display=swap" rel="stylesheet">
+
+<style>
+:root{--cream:#f8f3ed;--paper:#fffdf9;--brown:#725b4b;--dark:#49382e;--gold:#b69a70;--muted:#9c8878}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--cream);color:var(--dark);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+body.locked{overflow:hidden}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+h1,h2,h3{font-family:'Cormorant Garamond',serif;font-weight:500}
+.script{font-family:'Great Vibes',cursive}
+.section{padding:85px 20px}
+.container{width:min(900px,100%);margin:auto}
+.eyebrow{text-transform:uppercase;letter-spacing:4px;font-size:10px;color:var(--gold);margin-bottom:15px}
+.section-title{font-size:clamp(38px,7vw,58px);text-align:center;margin-bottom:12px}
+.section-description{text-align:center;color:var(--muted);line-height:1.8;font-size:13px;max-width:500px;margin:0 auto 35px}
+
+/* ENVELOPE */
+#opening{position:fixed;inset:0;z-index:1000;background:#e9ded3;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px;transition:opacity 1s,visibility 1s}
+#opening.closed{opacity:0;visibility:hidden;pointer-events:none}
+.opening-text{text-align:center;margin-bottom:35px}
+.opening-text p{font-size:10px;letter-spacing:4px;color:var(--brown);text-transform:uppercase}
+.opening-text h1{font-size:48px;margin-top:12px}
+.envelope{position:relative;width:min(330px,85vw);height:210px;background:#cbb19c;border-radius:4px;cursor:pointer;box-shadow:0 20px 50px #725b4b30;border:0;display:block;-webkit-tap-highlight-color:transparent}
+.envelope::before{content:"";position:absolute;inset:0;background:#ddc8b5;clip-path:polygon(0 0,50% 60%,100% 0);transform-origin:top;transition:transform .8s;z-index:3;pointer-events:none}
+.envelope.open::before{transform:rotateX(180deg);z-index:0}
+.envelope::after{content:"";position:absolute;inset:0;background:#b99e87;clip-path:polygon(0 100%,50% 48%,100% 100%);z-index:2;pointer-events:none}
+.envelope-card{position:absolute;background:#fffdf9;width:85%;height:85%;left:7.5%;top:5%;display:flex;justify-content:center;align-items:center;text-align:center;transition:transform 1s;z-index:1;pointer-events:none}
+.envelope.open .envelope-card{transform:translateY(-100px)}
+.envelope-card span{font-family:'Great Vibes',cursive;font-size:36px;color:var(--brown)}
+.seal{position:absolute;width:48px;height:48px;border-radius:50%;background:#a98469;color:#fff;display:grid;place-items:center;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;font-family:'Cormorant Garamond',serif;font-size:17px;transition:opacity .4s;pointer-events:none}
+.envelope.open .seal{opacity:0}
+.tap-text{margin-top:35px;font-size:11px;letter-spacing:3px;color:var(--brown);animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.4}}
+
+/* MUSIC */
+.music-bar{position:fixed;right:15px;bottom:15px;z-index:100;background:#fffdf9ee;border:1px solid #d8c1ae;border-radius:40px;padding:10px 16px;font-size:11px;color:var(--brown);display:flex;align-items:center;gap:10px}
+.music-bar button{border:0;background:transparent;color:var(--brown);font-weight:600}
+#spotifyContainer{position:fixed;right:15px;bottom:68px;z-index:99;width:min(300px,calc(100vw - 30px));height:80px;border-radius:12px;overflow:hidden;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s}
+#spotifyContainer.show{opacity:1;visibility:visible;pointer-events:auto}
+#spotifyContainer iframe{width:100%;height:80px;border:0}
+
+/* HERO */
+.hero{min-height:90vh;background:linear-gradient(#45372c55,#45372c55),url('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=85') center/cover,#6b5647;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;padding:50px 20px}
+.hero-content{max-width:750px}
+.hero .eyebrow{color:#f2dfc9}
+.hero h1{font-size:clamp(55px,11vw,100px);line-height:1}
+.hero .date{margin-top:30px;letter-spacing:5px;font-size:12px}
+.hero .invite{font-family:'Great Vibes',cursive;font-size:36px;margin-bottom:18px}
+
+/* INTRO + COUNTDOWN */
+.intro{text-align:center;background:var(--paper)}
+.intro .script{font-size:48px;color:var(--gold);margin-bottom:15px}
+.intro p{max-width:600px;margin:auto;line-height:2;font-size:14px;color:var(--muted)}
+.countdown{display:flex;justify-content:center;flex-wrap:wrap;gap:18px;margin-top:35px}
+.time-box{width:105px;background:#fffdf9;padding:20px 10px;border:1px solid #e8dace}
+.time-box strong{display:block;font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:500}
+.time-box span{text-transform:uppercase;letter-spacing:2px;font-size:9px;color:var(--muted)}
+
+/* EVENT */
+.event{background:#eee4da}
+.event-card{background:var(--paper);max-width:550px;margin:30px auto 0;padding:45px 25px;text-align:center;border:1px solid #dfcdbd}
+.event-card .script{font-size:40px;color:var(--gold)}
+.event-card h3{font-size:29px;margin:15px 0}
+.event-card p{color:var(--muted);line-height:2;font-size:13px}
+.map-button,.submit-button{display:inline-block;margin-top:25px;padding:13px 28px;border:0;background:var(--brown);color:#fff;text-decoration:none;letter-spacing:2px;text-transform:uppercase;font-size:10px}
+.submit-button:disabled{opacity:.6;cursor:wait}
+
+/* FORMS */
+.rsvp{background:var(--paper)}
+.form-card{max-width:570px;margin:auto;padding:35px;background:#f7f0e9;border:1px solid #e5d5c6}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:11px;letter-spacing:1px;margin-bottom:8px;color:var(--brown)}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:13px;border:1px solid #dfd0c2;background:#fff;outline:none;color:var(--dark);border-radius:2px}
+.form-group textarea{resize:vertical;min-height:100px}
+.form-card .submit-button{width:100%}
+.status{margin-top:15px;text-align:center;font-size:12px;line-height:1.6}
+
+/* MEMORY BOOK */
+.memory-section{background:#e9ded3}
+.memory-intro{text-align:center;margin-bottom:40px}
+.memory-intro .script{font-size:50px;color:var(--gold)}
+.book{max-width:850px;margin:auto;background:#fffaf2;padding:25px;border:1px solid #d8c1ae;box-shadow:0 20px 45px #725b4b18;position:relative}
+.book::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:#eadccf;pointer-events:none}
+.book-header{text-align:center;padding:25px 10px 35px}
+.book-header h3{font-size:35px}
+.book-header p{color:var(--muted);font-size:11px;letter-spacing:2px;margin-top:10px}
+.memory-form{max-width:580px;margin:0 auto 45px;padding:25px;background:#f5eee5;border:1px solid #e5d6c8;position:relative;z-index:1}
+.memory-form h3{text-align:center;font-size:28px;margin-bottom:22px}
+.memory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;position:relative;z-index:1}
+.memory-card{background:#fffdf8;min-height:190px;padding:25px 22px;border:1px solid #e6d7c8;box-shadow:0 5px 15px #725b4b12;transform:rotate(-.5deg)}
+.memory-card:nth-child(even){transform:rotate(.6deg);background:#faf5ed}
+.memory-card::before{content:"❝";font-family:Georgia,serif;font-size:38px;color:#c7a987;display:block;height:30px}
+.memory-card .note{font-family:'Cormorant Garamond',serif;font-size:20px;line-height:1.5;overflow-wrap:anywhere}
+.memory-card .guest{margin-top:20px;font-size:12px;color:var(--brown);font-weight:600}
+.memory-card .relation{margin-top:5px;font-size:10px;color:var(--muted);letter-spacing:1px}
+.memory-card .memory-date{margin-top:12px;font-size:9px;color:#ae9b89}
+.empty-book{grid-column:1/-1;text-align:center;color:var(--muted);padding:35px 10px;font-family:'Cormorant Garamond',serif;font-size:23px}
+.book-footer{text-align:center;padding:35px 10px 15px;font-family:'Great Vibes',cursive;font-size:35px;color:var(--gold)}
+.load-more{display:none;margin:25px auto 0;padding:12px 25px;background:transparent;border:1px solid var(--brown);color:var(--brown);font-size:10px;letter-spacing:2px;text-transform:uppercase}
+
+footer{text-align:center;padding:55px 20px;background:#554336;color:#f9eee3}
+footer .script{font-size:45px;margin-bottom:10px}
+footer p{font-size:10px;letter-spacing:2px;line-height:2}
+
+@media(max-width:600px){
+.section{padding:65px 16px}
+.hero{min-height:80vh}
+.form-card{padding:23px 18px}
+.book{padding:12px}
+.book::before{display:none}
+.memory-grid{grid-template-columns:1fr;gap:15px}
+.memory-card{min-height:150px}
+.countdown{gap:8px}
+.time-box{width:75px;padding:14px 5px}
+.time-box strong{font-size:28px}
+.memory-form{padding:18px}
+}
+</style>
+</head>
+
+<body class="locked">
+
+<!-- ENVELOPE OPENING -->
+<div id="opening">
+    <div class="opening-text">
+        <p>You are cordially invited to</p>
+        <h1 class="script">Our Wedding</h1>
+    </div>
+
+    <button type="button" class="envelope" id="envelope" aria-label="Open the wedding invitation">
+        <div class="envelope-card"><span>Afiq &amp; TBC</span></div>
+        <div class="seal">A &amp; S</div>
+    </button>
+
+    <div class="tap-text">TAP TO OPEN YOUR INVITATION</div>
+</div>
+
+<!-- MUSIC -->
+<audio id="weddingAudio" preload="auto" loop playsinline></audio>
+<div id="spotifyContainer"></div>
+<div class="music-bar">
+    <span>♫</span>
+    <span>Our Wedding Song</span>
+    <button type="button" id="musicButton">Play Song</button>
+</div>
+
+<!-- HERO -->
+<header class="hero">
+    <div class="hero-content">
+        <p class="eyebrow">Together with our families</p>
+        <p class="invite">We joyfully invite you</p>
+        <h1>Afiq &amp; TBC</h1>
+        <p class="date">20 DECEMBER 2026</p>
+    </div>
+</header>
+
+<!-- INTRO -->
+<section class="section intro">
+    <div class="container">
+        <p class="eyebrow">A beautiful beginning</p>
+        <div class="script">Two hearts, one journey</div>
+        <p>With grateful hearts and immense happiness, we invite you to celebrate the beginning of our forever. Your presence will make our special day even more meaningful.</p>
+
+        <div class="countdown" id="countdown">
+            <div class="time-box"><strong id="days">00</strong><span>Days</span></div>
+            <div class="time-box"><strong id="hours">00</strong><span>Hours</span></div>
+            <div class="time-box"><strong id="minutes">00</strong><span>Minutes</span></div>
+            <div class="time-box"><strong id="seconds">00</strong><span>Seconds</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- EVENT -->
+<section class="section event">
+    <div class="container">
+        <p class="eyebrow" style="text-align:center">Save the date</p>
+        <h2 class="section-title">Wedding Celebration</h2>
+        <div class="event-card">
+            <div class="script">The Wedding Day</div>
+            <h3>AFIQ &amp; TBC</h3>
+            <p>
+                Sunday, 20 December 2026<br>
+                11:00 AM – 4:00 PM<br><br>
+                The St. Regis Kuala Lumpur<br>
+                6, Jalan Stesen Sentral 2, Kuala Lumpur Sentral, 50470 Kuala Lumpur, Wilayah Persekutuan Kuala Lumpur<br>
+                Malaysia
+            </p>
+            <a class="map-button" href="https://www.google.com/maps/place/The+St.+Regis+Kuala+Lumpur/@3.1366622,101.6889093,17z/data=!3m1!4b1!4m9!3m8!1s0x31cc4983e3405449:0xf5c27f118f32aaf8!5m2!4m1!1i2!8m2!3d3.1366622!4d101.6889093!16s%2Fg%2F11bxdyzjpv?hl=en&entry=ttu&g_ep=EgoyMDI2MTExMC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener">View Location</a>
+        </div>
+    </div>
+</section>
+
+<!-- RSVP -->
+<section class="section rsvp">
+    <div class="container">
+        <p class="eyebrow" style="text-align:center">We hope to see you</p>
+        <h2 class="section-title">Kindly RSVP</h2>
+        <p class="section-description">Please let us know whether you will be joining us to celebrate this special occasion.</p>
+
+        <form class="form-card" id="rsvpForm">
+            <div class="form-group">
+                <label for="rsvpName">Your Full Name</label>
+                <input type="text" id="rsvpName" maxlength="100" required placeholder="Enter your name">
+            </div>
+            <div class="form-group">
+                <label for="attendance">Will you be attending?</label>
+                <select id="attendance" required>
+                    <option value="">Please select</option>
+                    <option value="Joyfully Accept">Joyfully Accept</option>
+                    <option value="Regretfully Decline">Regretfully Decline</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="guestCount">Number of Guests</label>
+                <select id="guestCount">
+                    <option value="1">1 Guest</option><option value="2">2 Guests</option>
+                    <option value="3">3 Guests</option><option value="4">4 Guests</option>
+                    <option value="5">5 Guests</option><option value="6">6 Guests</option>
+                    <option value="7">7 Guests</option><option value="8">8 Guests</option>
+                    <option value="9">9 Guests</option><option value="10">10 Guests</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="rsvpMessage">A Message for the Couple (Optional)</label>
+                <textarea id="rsvpMessage" maxlength="1000" placeholder="Leave a little message..."></textarea>
+            </div>
+            <button type="submit" class="submit-button" id="rsvpButton">Submit RSVP</button>
+            <p class="status" id="rsvpStatus" aria-live="polite"></p>
+        </form>
+    </div>
+</section>
+
+<!-- MEMORY BOOK -->
+<section class="section memory-section">
+    <div class="container">
+        <div class="memory-intro">
+            <p class="eyebrow">A collection of love and memories</p>
+            <h2 class="section-title">Our Wedding Memory Book</h2>
+            <div class="script">Words we will treasure forever</div>
+            <p class="section-description">Every kind word becomes a beautiful memory. Leave us a heartfelt wish, a favourite memory, or a little piece of advice for our journey together.</p>
+        </div>
+
+        <div class="book">
+            <div class="book-header">
+                <p>THE WEDDING OF</p>
+                <h3>Afiq &amp; TBC</h3>
+                <p>20 DECEMBER 2026 · OUR SPECIAL DAY</p>
+            </div>
+
+            <form class="memory-form" id="memoryForm">
+                <h3 class="script">Leave Your Love Note</h3>
+                <div class="form-group">
+                    <label for="memoryName">Your Name</label>
+                    <input type="text" id="memoryName" maxlength="100" required placeholder="Who is writing this memory?">
+                </div>
+                <div class="form-group">
+                    <label for="memoryRelation">Your Relationship to the Couple</label>
+                    <input type="text" id="memoryRelation" maxlength="80" placeholder="e.g. Friend, Cousin, Family">
+                </div>
+                <div class="form-group">
+                    <label for="memoryNote">Your Wedding Wish or Memory</label>
+                    <textarea id="memoryNote" maxlength="1000" required placeholder="Write something beautiful for the couple..."></textarea>
+                </div>
+                <button type="submit" class="submit-button" id="memoryButton">Add to Our Memory Book</button>
+                <p class="status" id="memoryStatus" aria-live="polite"></p>
+            </form>
+
+            <div class="memory-grid" id="memoryGrid">
+                <div class="empty-book">Loading our beautiful memories...</div>
+            </div>
+
+            <button class="load-more" id="loadMore" type="button">Read More Memories</button>
+
+            <div class="book-footer">With love, AFIQ &amp; TBC</div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="script">Forever begins with us</div>
+    <p>AFIQ &amp; TBC · 20 DECEMBER 2026</p>
+    <p>MADE WITH LOVE</p>
+</footer>
+
+<script>
+// ===========================================
+// 1. SETTINGS
+// ===========================================
+const SUPABASE_URL = "https://qljynttpditdyxquwfkz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_AFyIImlN41tGp3_D6W6rCQ_vX83TBmB";
+
+// Malaysia time (UTC+8)
+const weddingDate = new Date("2026-12-20T11:00:00+08:00");
+
+// Your own audio file (full song). Put it in the SAME folder as this HTML file.
+const songFile = "wedding-song.mp3";
+
+// Fallback only: used if the audio file is missing or cannot play.
+// Spotify embeds give a 30-second preview unless the guest is logged in to Spotify.
+const spotifyTrackID = "3CV4lFELdziNM1OnHU8nwz";
+
+// ===========================================
+// 2. SAFE SUPABASE SETUP
+// A bad URL/key or a blocked CDN must NEVER stop the invitation from opening.
+// ===========================================
+let supabaseClient = null;
+try {
+    const configured = SUPABASE_URL.startsWith("http") && !SUPABASE_KEY.startsWith("YOUR_");
+    if (window.supabase && configured) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } else {
+        console.warn("Supabase is not configured yet. RSVP and memory book are disabled.");
+    }
+} catch (err) {
+    console.error("Supabase setup failed:", err);
+}
+
+// ===========================================
+// 3. OPEN THE INVITATION
+// ===========================================
+let invitationOpened = false;
+
+function openInvitation() {
+    if (invitationOpened) return;
+    invitationOpened = true;
+
+    const envelope = document.getElementById("envelope");
+    const opening = document.getElementById("opening");
+
+    envelope.classList.add("open");
+
+    // Start the song right here: the tap is the user gesture browsers require for sound.
+    try { startMusic(); } catch (err) { console.error(err); }
+
+    setTimeout(function () {
+        opening.classList.add("closed");
+        opening.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("locked");
+        window.scrollTo(0, 0);
+        loadMemories(true);
+    }, 1100);
+}
+
+document.getElementById("envelope").addEventListener("click", openInvitation);
+
+// ===========================================
+// 4. MUSIC (full song, starts when the envelope is tapped)
+// ===========================================
+const audio = document.getElementById("weddingAudio");
+const musicButton = document.getElementById("musicButton");
+const spotifyBox = document.getElementById("spotifyContainer");
+let musicMode = "audio"; // switches to "spotify" only if the audio file fails
+
+function setMusicLabel() {
+    if (musicMode === "audio") {
+        musicButton.textContent = audio.paused ? "Play Song" : "Pause Song";
+    } else {
+        musicButton.textContent = spotifyBox.classList.contains("show") ? "Hide Player" : "Play Song";
+    }
+}
+
+function loadSpotify() {
+    if (spotifyBox.querySelector("iframe")) return;
+    const frame = document.createElement("iframe");
+    frame.title = "Wedding song Spotify player";
+    frame.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
+    frame.src = "https://open.spotify.com/embed/track/" +
+        encodeURIComponent(spotifyTrackID) + "?utm_source=generator";
+    spotifyBox.appendChild(frame);
+}
+
+function useSpotifyFallback() {
+    musicMode = "spotify";
+    loadSpotify();
+    setMusicLabel();
+}
+
+function startMusic() {
+    audio.src = songFile;
+    audio.loop = true;
+    audio.volume = 0.8;
+
+    const attempt = audio.play();
+    if (attempt && attempt.catch) {
+        attempt.catch(function (err) {
+            console.warn("Song could not start automatically:", err);
+            // NotAllowedError = browser blocked sound; guest can press Play Song.
+            // Anything else = file missing or unsupported, so use Spotify instead.
+            if (!err || err.name !== "NotAllowedError") useSpotifyFallback();
+            setMusicLabel();
+        });
+    }
+}
+
+audio.addEventListener("play", setMusicLabel);
+audio.addEventListener("pause", setMusicLabel);
+audio.addEventListener("error", function () {
+    if (audio.getAttribute("src")) useSpotifyFallback();
+});
+
+musicButton.addEventListener("click", function () {
+    if (musicMode === "spotify") {
+        loadSpotify();
+        spotifyBox.classList.toggle("show");
+        setMusicLabel();
+        return;
+    }
+    if (!audio.getAttribute("src")) {
+        startMusic();
+    } else if (audio.paused) {
+        audio.play().catch(function (err) { console.warn(err); });
+    } else {
+        audio.pause();
+    }
+});
+
+// ===========================================
+// 5. COUNTDOWN
+// ===========================================
+function updateCountdown() {
+    const diff = weddingDate.getTime() - Date.now();
+
+    if (diff <= 0) {
+        document.getElementById("countdown").innerHTML = "<p>Today is our special day! ♡</p>";
+        clearInterval(countdownTimer);
+        return;
+    }
+
+    document.getElementById("days").textContent = Math.floor(diff / 86400000);
+    document.getElementById("hours").textContent = Math.floor(diff / 3600000) % 24;
+    document.getElementById("minutes").textContent = Math.floor(diff / 60000) % 60;
+    document.getElementById("seconds").textContent = Math.floor(diff / 1000) % 60;
+}
+const countdownTimer = setInterval(updateCountdown, 1000);
+updateCountdown();
+
+// ===========================================
+// 6. RSVP
+// ===========================================
+document.getElementById("rsvpForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const button = document.getElementById("rsvpButton");
+    const status = document.getElementById("rsvpStatus");
+    const guestName = document.getElementById("rsvpName").value.trim();
+    const attendance = document.getElementById("attendance").value;
+    const guestCount = Number(document.getElementById("guestCount").value);
+    const message = document.getElementById("rsvpMessage").value.trim();
+
+    if (!guestName || !attendance) {
+        status.style.color = "darkred";
+        status.textContent = "Please complete the required fields.";
+        return;
+    }
+    if (!supabaseClient) {
+        status.style.color = "darkred";
+        status.textContent = "RSVP is not available right now. Please try again later.";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Submitting...";
+    status.textContent = "";
+
+    try {
+        const { error } = await supabaseClient.from("wedding_rsvps").insert([{
+            guest_name: guestName,
+            attendance: attendance,
+            guest_count: guestCount,
+            message: message
+        }]);
+        if (error) throw error;
+
+        status.style.color = "green";
+        status.textContent = "Thank you! Your RSVP has been received with love.";
+        this.reset();
+    } catch (err) {
+        console.error("RSVP error:", err);
+        status.style.color = "darkred";
+        status.textContent = "Sorry, your RSVP could not be submitted. Please try again.";
+    } finally {
+        button.disabled = false;
+        button.textContent = "Submit RSVP";
+    }
+});
+
+// ===========================================
+// 7. MEMORY BOOK
+// ===========================================
+const MEMORY_PAGE_SIZE = 12;
+let memoryOffset = 0;
+let allMemoriesLoaded = false;
+let memoryLoading = false;
+
+async function loadMemories(reset = true) {
+    const grid = document.getElementById("memoryGrid");
+    const moreButton = document.getElementById("loadMore");
+
+    if (!supabaseClient) {
+        grid.innerHTML = '<div class="empty-book">Our memory book will open soon. ♡</div>';
+        return;
+    }
+    if (memoryLoading) return;
+
+    if (reset) {
+        memoryOffset = 0;
+        allMemoriesLoaded = false;
+        grid.innerHTML = "";
+    }
+    if (allMemoriesLoaded) return;
+
+    memoryLoading = true;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from("wedding_guestbook")
+            .select("id, guest_name, relationship, note, created_at")
+            .order("created_at", { ascending: false })
+            .range(memoryOffset, memoryOffset + MEMORY_PAGE_SIZE - 1);
+        if (error) throw error;
+
+        if (reset && data.length === 0) {
+            grid.innerHTML = '<div class="empty-book">Our memory book is waiting for your first beautiful message. ♡</div>';
+            moreButton.style.display = "none";
+            allMemoriesLoaded = true;
+            return;
+        }
+
+        data.forEach(function (memory) {
+            const card = document.createElement("article");
+            card.className = "memory-card";
+
+            const note = document.createElement("p");
+            note.className = "note";
+            note.textContent = memory.note;
+
+            const guest = document.createElement("p");
+            guest.className = "guest";
+            guest.textContent = "— " + memory.guest_name;
+
+            const relation = document.createElement("p");
+            relation.className = "relation";
+            relation.textContent = memory.relationship || "WITH LOVE";
+
+            const date = document.createElement("p");
+            date.className = "memory-date";
+            date.textContent = new Date(memory.created_at).toLocaleDateString("en-MY", {
+                day: "numeric", month: "long", year: "numeric"
+            });
+
+            card.append(note, guest, relation, date);
+            grid.appendChild(card);
+        });
+
+        memoryOffset += data.length;
+
+        if (data.length < MEMORY_PAGE_SIZE) {
+            allMemoriesLoaded = true;
+            moreButton.style.display = "none";
+        } else {
+            moreButton.style.display = "block";
+        }
+    } catch (err) {
+        console.error("Memory book loading error:", err);
+        if (reset) {
+            grid.innerHTML = '<div class="empty-book">We could not load the memory book. Please refresh and try again.</div>';
+        }
+    } finally {
+        memoryLoading = false;
+    }
+}
+
+document.getElementById("loadMore").addEventListener("click", function () {
+    loadMemories(false);
+});
+
+document.getElementById("memoryForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const button = document.getElementById("memoryButton");
+    const status = document.getElementById("memoryStatus");
+    const guestName = document.getElementById("memoryName").value.trim();
+    const relationship = document.getElementById("memoryRelation").value.trim();
+    const note = document.getElementById("memoryNote").value.trim();
+
+    if (!guestName || !note) {
+        status.style.color = "darkred";
+        status.textContent = "Please enter your name and message.";
+        return;
+    }
+    if (!supabaseClient) {
+        status.style.color = "darkred";
+        status.textContent = "The memory book is not available right now. Please try again later.";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Saving your memory...";
+    status.textContent = "";
+
+    try {
+        const { error } = await supabaseClient.from("wedding_guestbook").insert([{
+            guest_name: guestName,
+            relationship: relationship,
+            note: note
+        }]);
+        if (error) throw error;
+
+        status.style.color = "green";
+        status.textContent = "Your beautiful message has been added to our memory book. ♡";
+        this.reset();
+        await loadMemories(true);
+    } catch (err) {
+        console.error("Memory submission error:", err);
+        status.style.color = "darkred";
+        status.textContent = "We could not save your message. Please try again.";
+    } finally {
+        button.disabled = false;
+        button.textContent = "Add to Our Memory Book";
+    }
+});
+</script>
+
+</body>
+</html>
